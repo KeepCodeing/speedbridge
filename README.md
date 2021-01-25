@@ -33,7 +33,7 @@
 
 在现实生活中，我们做出的大部分选择都是无法返回的，在回溯程序中则正好相反，我们可以将所有选择都尝试一遍，最后得出最优解。可以这样做的原因是因为我们要到了“递归”，即利用递归将每次选择的状态保存下来。
 
-![解答树例子](.\images\解答树例子.jpg)
+![解答树例子](https://gitee.com/hwz-magicweb/speedbridge/raw/master/images/解答树例子.jpg)
 
 ##### 例子
 
@@ -53,7 +53,7 @@
 
 依次类推可以得到下面的解答树：
 
-![解答树例题].\images\解答树例题.jpg)
+![解答树例题](https://gitee.com/hwz-magicweb/speedbridge/raw/master/images/解答树例题.jpg)
 
 代码：（建议在学习下面的内容后再来思考为什么要这样做）
 
@@ -135,7 +135,7 @@ void dfs(int level, int deepth) {
 
 首先我们可以得到下面这个解答树，我们可以发现，如果按照上面提到的叶子节点才是答案只能得到{3}, {2}这两个集合。而如果我们将红蓝两条路径上经过的所有节点都记录下来才能得到正确的集合。即**子集型问题的答案是整条路径，而不是叶子节点。**
 
-![解答树子集例子](.\images\解答树子集例子.jpg)
+![解答树子集例子](https://gitee.com/hwz-magicweb/speedbridge/raw/master/images/解答树子集例子.jpg)
 
 例题：
 
@@ -164,58 +164,57 @@ void dfs(int level, int deepth) {
 
 首先我们去掉了```if (level >= deepth) {return;}```，并将记录答案的代码直接写在了原来判断是否到达了叶子节点的地方。这是因为前面提到的，我们的答案是整条路径上的，而不仅仅是叶子节点上的。另外我们也去掉了```dfs(i, deepth);```	这种可以无限选择同一个选项的写法，这是因为集合的定义之一就是“没有重复元素”，子集型问题自然也就不会出现可以重复选择的情况。
 
+#### 剪枝优化
+
+剪枝简单来说就是如果当前节点的状态是不合法的，程序直接返回，不进行更深层次的递归。对于绝大多数题目而言剪枝是必须的，这是因为回溯算法的时间复杂度非常高，不加任何优化很可能就会超时。
+
+##### 可行性剪枝
+
+就是判断当前答案是否合法，比如算和出现大于目标值的答案，一定程度上能加快DFS的速度。
+
+##### 最优性剪枝
+
+比如算最短步数出现了更长的答案，它适用于各种求最值的情况。
+
 ### 例题及AC代码
 
 [[P1036 [NOIP2002 普及组] 选数](https://www.luogu.com.cn/problem/P1036)
 
 ```cpp
 #include <iostream>
-#include <cmath>
+#include <algorithm>
 #include <vector>
+#define endl '\n'
 using namespace std;
-// 谔谔，只能做下回溯题的样子
 
-// 啊这...忘了去重..（结果不用去重...) 
+const int N = 20 + 10;
+int nums[N];
+int cnt = 0;
 
-class Solution {
-public:
-	int primeCnt = 0;
-	bool isPrime(int num) {
-		int k = (int)sqrt((double)num);
-		for (int i = 2; i <= k; i++) {
-			if (num % i == 0) return false;
-		} 
-		return true;
+bool isPrime(int n) {
+	for (int i = 2; i <= n / i; i++) {
+		if (!(n % i)) return false;
 	}
-	void dfs(int level, int deepth, int nums[], int sumNum, vector<int >& c, int used, int n) {
-		if (used == deepth) {
-			primeCnt += (int)isPrime(sumNum);
-			return;
-		}
+	return true;
+}
 
-		for (int i = level; i < n; i++) {
-			sumNum += nums[i];
-			c.push_back(nums[i]); 
-			dfs(i + 1, deepth, nums, sumNum, c, used + 1, n);
-			sumNum -= nums[i];
-			c.pop_back();
-		}
+void dfs(int level, int deepth, int k, int sum) {
+	if (!k) {
+		if (isPrime(sum)) cnt++;
+		return;
 	}
-	int resolve() {
-		int n, k;
-		cin >> n >> k;
-		int *nums = new int[n];
-		for (int i = 0; i < n; i++) cin >> nums[i];
-		vector<int > c;
-		dfs(0, k, nums, 0, c, 0, n);
-		delete[] nums;
-		return primeCnt;
+	for (int i = level; i < deepth; i++) {
+		dfs(i + 1, deepth, k - 1, sum + nums[i]);
 	}
-};
- 
+}
+
 int main() {
-	Solution s = Solution();
-	cout << s.resolve();
+	ios::sync_with_stdio(false), cin.tie(0), cout.tie(0);
+	int n, k;
+	cin >> n >> k;
+	for (int i = 0; i < n; i++) cin >> nums[i];
+	dfs(0, n, k, 0);
+	cout << cnt << endl;
 	return 0;
 }
 ```
@@ -237,6 +236,7 @@ if (used == k) {
 		return;
 	}
 	for (int i = level; i <= deepth; i++) {
+        // 进行剪枝
 		if (sNum + i > n) continue;
 		dfs(i, deepth, sNum + i, used + 1);
 	}
@@ -265,6 +265,7 @@ public:
             return;
         }
         for (int i = level; i < deepth; i++) {
+            // 进行剪枝
             if (target - nums[i] < 0) continue;
             temp.push_back(nums[i]);
             dfs(i, deepth, target - nums[i]);
