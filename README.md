@@ -141,7 +141,6 @@ void dfs(int level, int deepth) {
 
 1. [78. 子集](https://leetcode-cn.com/problems/subsets/)，子集型问题入门题。
 2. [1239. 串联字符串的最大长度](https://leetcode-cn.com/problems/maximum-length-of-a-concatenated-string-with-unique-characters/)，在求子集的同时加入了字符串去重。
-3. [1079. 活字印刷](https://leetcode-cn.com/problems/letter-tile-possibilities/)，子集型问题的入门题，同样加入了字符串去重。
 
 变量含义：
 
@@ -223,31 +222,30 @@ int main() {
 
 ```cpp
 #include <iostream>
-#include <vector>
+#define endl '\n'
 using namespace std;
-int n, k;
 int cnt = 0;
-void dfs(int level, int deepth, int sNum, int used) {
-if (used > k) return;
-if (used == k) {
-		if (sNum == n) {
-			cnt++;
-		}
+
+void dfs(int level, int deepth, int target, int k, string path) {
+	if (k < 0) return;
+	if (!target && !k) {
+		// cout << path << endl;
+		cnt++;
 		return;
 	}
-	for (int i = level; i <= deepth; i++) {
-        // 进行剪枝
-		if (sNum + i > n) continue;
-		dfs(i, deepth, sNum + i, used + 1);
+	for (int i = level; i < deepth; i++) {
+		if (target - i < 0) continue;
+		dfs(i, deepth, target - i, k - 1, path + char(i + '0'));
 	}
+	
 }
+
 int main() {
-	ios::sync_with_stdio(false);
-	cin.tie(0);
+	ios::sync_with_stdio(false), cin.tie(0), cout.tie(0);
+	int n, k;
 	cin >> n >> k;
-	vector<int > path;
-	dfs(1, n, 0, 0);
-	cout << cnt;
+	dfs(1, n, n, k, "");
+	cout << cnt << endl;
 	return 0;
 }
 ```
@@ -285,22 +283,24 @@ public:
 ```cpp
 class Solution {
 public:
-    vector<vector<int>> res;
-    vector<int > temp;
-    void dfs(int level, int deepth, int k, int target) {
-        if (k == 0) {
-            if (target == 0) res.push_back(temp);
+    vector<vector<int > > vec;
+    void dfs(int level, int deepth, vector<int >& temp, int n, int k) {
+        if (k < 0) return;
+        if (!n && !k) {
+            vec.push_back(temp);
             return;
         }
         for (int i = level; i <= 9; i++) {
+            if (n - i < 0) continue;
             temp.push_back(i);
-            dfs(i + 1, deepth, k - 1, target - i);
+            dfs(i + 1, deepth, temp, n - i, k - 1);
             temp.pop_back();
         }
     }
     vector<vector<int>> combinationSum3(int k, int n) {
-        dfs(1, n, k, n);
-        return res;
+        vector<int > temp;
+        dfs(1, 9, temp, n, k);
+        return this->vec;
     }
 };
 ```
@@ -355,45 +355,6 @@ public:
         dfs(0, arr.size(), "");
         return this->res;
         return 0;
-    }
-};
-```
-
-[1079. 活字印刷](https://leetcode-cn.com/problems/letter-tile-possibilities/)
-
-```cpp
-class Solution {
-public:
-	int *visited;
-	vector<char > v;
-	string str;
-	set<string > strSet;
-	void dfs(int left, int deepth) {
-		// 这里的添加答案的出口就是还剩字符 
-		if (left) {
-			string s;
-			for (int i = 0; i < v.size(); i++) s += v[i];
-			// 排除空字符 
-			if (!s.empty()) strSet.insert(s);
-			// 不返回，如果直接返回就没有后续递归了 
-			// return;
-		}
-		for (int i = 0; i < deepth; i++) {
-			if (visited[i]) continue;
-			visited[i] = 1;
-			v.push_back(str[i]);
-			dfs(left - 1, deepth);
-			v.pop_back();
-			visited[i] = 0;
-		}
-	}
-    int numTilePossibilities(string tiles) {
-        if (tiles.size() == 0 || tiles.empty()) return 0;
-        int tLen = tiles.size();
-        visited = new int[tLen]();
-        this->str = tiles;
-        dfs(tLen + 1, tLen);
-        return strSet.size();
     }
 };
 ```
